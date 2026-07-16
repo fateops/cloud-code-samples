@@ -13,6 +13,10 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
+    # 【新增】设置默认的工作目录，让所有 step 都先 cd 进这里
+    defaults:
+      run:
+        working-directory: ./golang/go-guestbook
 
     steps:
       # 1. 拉取代码
@@ -30,7 +34,9 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./golang/go-guestbook/src
+          # 【修改】因为已经设置了 working-directory，这里的 context 指向当前目录即可
+          # 或者写相对路径 ./src (前提是 src 在 go-guestbook 下面)
+          context: ./src
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
