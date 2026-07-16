@@ -36,7 +36,8 @@ jobs:
         with:
           # 【修改】因为已经设置了 working-directory，这里的 context 指向当前目录即可
           # 或者写相对路径 ./src (前提是 src 在 go-guestbook 下面)
-          context: ./src
+          context: ./golang/go-guestbook/src
+          dockerfile: ./golang/go-guestbook/Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
