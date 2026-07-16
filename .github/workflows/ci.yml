@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI Pipeline (Frontend & Backend)
 
 on:
   push:
@@ -7,39 +7,56 @@ on:
     branches: [ "v1" ]
 
 env:
-  IMAGE_NAME: go-guestbook
+  # 基础路径变量，方便统一管理
+  PROJECT_PATH: golang/go-guestbook
 
 jobs:
-  build-and-push:
+  # ==========================
+  # Job 1: 构建后端 (Backend)
+  # ==========================
+  build-backend:
     runs-on: ubuntu-latest
-
     steps:
-      # 1. 拉取代码
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. 登录 Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 3. 构建并推送 Docker 镜像
-      - name: Build and push Docker image
+      - name: Build and push Backend image
         uses: docker/build-push-action@v5
         with:
-          # 【关键修改1】Context 指向包含 Dockerfile 的目录，或者是代码目录
-          # 假设你的 Dockerfile 在 golang/go-guestbook/ 下，且代码在 src/ 下
-          # 这里我们把 context 设为项目根目录，然后在 file 里指定 Dockerfile 位置
-          context: ./golang/go-guestbook
-
-          # 【关键修改2】参数名必须是 file，且路径要对应 context
-          # 如果 context 是 ./golang/go-guestbook，Dockerfile 就在根下，直接写 Dockerfile
-          # 如果 Dockerfile 在 src 里，就写 src/Dockerfile
-          file: ./golang/go-guestbook/Dockerfile
-
+          # 上下文指向 backend 目录，确保能找到里面的 Dockerfile
+          context: ./${{ env.PROJECT_PATH }}/src/backend
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/go-guestbook-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/go-guestbook-backend:${{ github.sha }}
+
+  # ==========================
+  # Job 2: 构建前端 (Frontend)
+  # ==========================
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Frontend image
+        uses: docker/build-push-action@v5
+        with:
+          # 上下文指向 frontend 目录
+          context: ./${{ env.PROJECT_PATH }}/src/frontend
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/go-guestbook-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/go-guestbook-frontend:${{ github.sha }}
